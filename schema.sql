@@ -69,3 +69,29 @@ create index if not exists idx_videos_uploaded_at on public.videos(uploaded_at d
 -- (Add policies later based on who should read/write)
 
 comment on table public.pattern_cards is 'Structured learnings extracted from reference videos for viral content production';
+
+-- ---------------------------------------------------------------------------
+-- Phase 1 additions (processing script). Safe to re-run on an existing DB.
+-- ---------------------------------------------------------------------------
+
+-- Videos: processing diagnostics + measured cut timing
+alter table public.videos add column if not exists error_message text;
+alter table public.videos add column if not exists width int;
+alter table public.videos add column if not exists height int;
+alter table public.videos add column if not exists scene_cuts jsonb; -- [seconds, ...] hard cuts detected by ffmpeg
+alter table public.videos add column if not exists processed_at timestamptz;
+
+-- Frames: reference stills flagged by the LLM
+alter table public.frames add column if not exists is_reference_still boolean default false;
+alter table public.frames add column if not exists why_selected text;
+create index if not exists idx_frames_video_id on public.frames(video_id);
+create index if not exists idx_frames_reference on public.frames(video_id) where is_reference_still;
+
+-- Pattern cards: motion-graphics fields, auto tags, provenance
+alter table public.pattern_cards add column if not exists motion_style text;
+alter table public.pattern_cards add column if not exists tags text[] default '{}';
+alter table public.pattern_cards add column if not exists categories text[] default '{}';
+alter table public.pattern_cards add column if not exists model text;          -- model that actually produced the card
+alter table public.pattern_cards add column if not exists prompt_version text; -- e.g. "v2+1a2b3c4d" (label + prompt file hash)
+create index if not exists idx_pattern_cards_tags on public.pattern_cards using gin (tags);
+create index if not exists idx_pattern_cards_categories on public.pattern_cards using gin (categories);

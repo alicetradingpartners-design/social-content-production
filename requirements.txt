@@ -1,0 +1,8 @@
+anthropic>=2.3.0
+supabase>=2.33.0
+pydantic>=2.7
+python-dotenv>=1.0
+# Transcription (TRANSCRIBE_BACKEND=local). Drop it if you only use the OpenAI API or none.
+faster-whisper>=1.1.0
+# Transcription (TRANSCRIBE_BACKEND=openai) only.
+openai>=1.40
